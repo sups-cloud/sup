@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Тест: Апелляции и выплаты</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b1220; color:#e8eefc; margin:0; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px; }
+    .card { background:#111a2e; border:1px solid #1f2a44; border-radius: 14px; padding: 18px; }
+    h1 { margin: 0 0 10px; font-size: 22px; }
+    .muted { color:#a8b3d3; font-size: 14px; line-height: 1.35; }
+    .row { display:flex; gap:12px; flex-wrap: wrap; }
+    input[type="text"]{ width:100%; padding:12px 12px; border-radius:10px; border:1px solid #2a3556; background:#0b1220; color:#e8eefc; }
+    button { padding: 12px 14px; border-radius: 10px; border: 0; background: #4b7dff; color:#081025; font-weight: 700; cursor: pointer; }
+    button.secondary { background:#223052; color:#e8eefc; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .qhead { display:flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .pill { font-size:12px; padding:6px 10px; background:#223052; border:1px solid #2a3556; border-radius: 999px; color:#cfe0ff; }
+    .answers { margin-top: 10px; display: grid; gap: 10px; }
+    label.opt { display:flex; gap:10px; align-items: flex-start; padding: 12px; border-radius: 12px; border:1px solid #2a3556; background:#0b1220; cursor:pointer; }
+    label.opt:hover { border-color:#4b7dff; }
+    .footer { display:flex; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .danger { background:#ff4b4b; color:#140808; }
+    .ok { color:#98f0c2; font-weight: 700; }
+    .warn { color:#ffd27a; font-weight: 700; }
+    .hr { height:1px; background:#223052; margin:14px 0; }
+    .small { font-size: 13px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="viewStart">
+      <h1>Тест: Апелляции и выплаты</h1>
+      <p class="muted">
+        Правила: при переключении вкладки, сворачивании окна или уходе из страницы тест сбрасывается.
+        Ответы и правильные варианты будут показаны в конце.
+      </p>
+      <div class="hr"></div>
+      <div class="row">
+        <div style="flex:1 1 320px">
+          <div class="muted small">Имя и фамилия</div>
+          <input id="nameInput" type="text" placeholder="Например: Иван Петров" />
+        </div>
+        <div style="flex:0 0 auto; align-self: end;">
+          <button id="startBtn">Начать тест</button>
+        </div>
+      </div>
+      <p class="muted small" style="margin-top:10px">Подсказка: лучше проходить с телефона и не переключаться между приложениями.</p>
+    </div>
+
+    <div class="card" id="viewQuiz" style="display:none">
+      <div class="qhead">
+        <div>
+          <div class="muted small">Участник: <span id="who" class="mono"></span></div>
+          <h1 style="margin-top:6px" id="qTitle"></h1>
+        </div>
+        <div class="pill" id="qPill"></div>
+      </div>
+
+      <div class="answers" id="answers"></div>
+
+      <div class="footer">
+        <button class="secondary" id="prevBtn">Назад</button>
+        <div class="row" style="align-items:center">
+          <span class="muted small">Сбросов: <span id="resetCount">0</span></span>
+          <button id="nextBtn">Далее</button>
+        </div>
+      </div>
+
+      <p class="muted small" style="margin-top:12px">
+        Если вы переключитесь на другую вкладку или свернете окно, тест будет сброшен.
+      </p>
+    </div>
+
+    <div class="card" id="viewReset" style="display:none">
+      <h1>Тест сброшен</h1>
+      <p class="muted">Вы переключились на другую вкладку или потеряли фокус окна. По правилам тест сброшен.</p>
+      <div class="hr"></div>
+      <button id="restartBtn" class="danger">Начать заново</button>
+    </div>
+
+    <div class="card" id="viewResult" style="display:none">
+      <h1>Результат</h1>
+      <p class="muted">Участник: <span id="resName" class="mono"></span></p>
+      <p class="muted">Правильных ответов: <span id="resScore" class="ok"></span> из <span id="resTotal"></span> (<span id="resPercent"></span>%)</p>
+      <p class="muted">Сбросов: <span id="resResets" class="warn"></span></p>
+      <div class="hr"></div>
+
+      <div id="sendStatus" class="muted small">Отправка результата...</div>
+
+      <div class="hr"></div>
+      <h2 style="margin:0 0 10px; font-size:18px">Правильные ответы</h2>
+      <div id="answerKey" class="muted small"></div>
+
+      <div class="footer">
+        <button id="againBtn" class="secondary">Пройти еще раз</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // 1) ВСТАВЬТЕ СЮДА URL ВЕБ-ПРИЛОЖЕНИЯ APPS SCRIPT
+  const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+  const quiz = [
+    { q: "1. Где должны обсуждаться рабочие запросы к трейдеру по апелляциям?", opts: ["Ветка «Апелляции»","Ветка «Выписки»","General","Личные сообщения трейдеру"], a: 2 },
+    { q: "2. Общий SLA по апелляциям составляет:", opts: ["24 часа","7 дней","14 дней","30 дней"], a: 3 },
+    { q: "3. SLA на ответ по апелляции со стороны трейдера:", opts: ["15 минут","30 минут","60 минут","24 часа"], a: 1 },
+    { q: "4. Какой тип обработки апелляций применяется по умолчанию?", opts: ["Ручная","Автоматическая","Только через лидов","Только через мерчанта"], a: 1 },
+    { q: "5. Для ордеров типа PayOut в апелляциях используется:", opts: ["Автоматическая обработка","Ручная обработка","Только обработка ботом","Апелляции по PayOut не рассматриваются"], a: 1 },
+    { q: "6. «Деньги не получены»: если трейдер не предоставил доказательства в чат, что нужно сделать?", opts: ["Сразу удовлетворить в пользу клиента","Отменить апелляцию","Сделать доп. запрос о готовности предоставить доказательства","Закрыть по SLA без уточнений"], a: 2 },
+    { q: "7. «Требуется выписка или видео из ЛК клиента»: первичная апелляция завершается автоматически по SLA?", opts: ["Да","Нет"], a: 1 },
+    { q: "8. «Неверные реквизиты»: что верно по регламенту?", opts: ["Завершается по SLA","Не завершается по SLA, нужно отменить с указанием причины в комментарии","Всегда удовлетворяется в пользу клиента","Всегда требует продления на 24 часа"], a: 1 },
+    { q: "9. «Блок ЛК»: сумма до 50 000 включительно, ответа от трейдера нет. Что делаем?", opts: ["Отменяем апелляцию","Удовлетворяем апелляцию","Запрашиваем выписку клиента","Передаем на ручную обработку без решения"], a: 1 },
+    { q: "10. «Блок ЛК»: сумма свыше 50 000. Что должен сделать трейдер в течение 30 минут?", opts: ["Запросить выписку клиента","Дать ответ и запросить продление на восстановление доступа","Закрыть в пользу клиента","Подтвердить выплату PDF файлом"], a: 1 },
+    { q: "11. Допустимые доказательства это:", opts: ["Выписка и видео из ЛК","Только выписка","Только видео","Голосовое сообщение и скрин чата"], a: 0 },
+    { q: "12. Payout это:", opts: ["Депозит клиента","Выплата клиенту по реквизитам, которые передал мерчант","Апелляция по депозиту","Платеж в пользу мерчанта"], a: 1 },
+    { q: "13. SLA по выплатам составляет:", opts: ["30 минут","60 минут","180 минут","30 дней"], a: 2 },
+    { q: "14. В системе payout ордер создается с двумя идентификаторами. Какие это ID?", opts: ["ID клиента и ID трейдера","Внешний ID (мерчант) и внутренний ID (площадка)","Только внутренний ID","ID саппорта и ID мерчанта"], a: 1 },
+    { q: "15. После суммирования доступных объемов выплат от трейдеров саппорт должен:", opts: ["Прибавить 25% в резерв","Вычесть 25% в резерв","Вычесть фиксированно 50 000","Ничего не вычитать"], a: 1 },
+  ];
+
+  const state = {
+    name: "",
+    idx: 0,
+    answers: Array(quiz.length).fill(null),
+    started: false,
+    resetCount: 0,
+    guardEnabled: false,
+  };
+
+  const el = (id) => document.getElementById(id);
+
+  function show(viewId) {
+    ["viewStart","viewQuiz","viewReset","viewResult"].forEach(v => el(v).style.display = (v === viewId ? "" : "none"));
+  }
+
+  function renderQuestion() {
+    const item = quiz[state.idx];
+    el("who").textContent = state.name;
+    el("qTitle").textContent = item.q;
+    el("qPill").textContent = `Вопрос ${state.idx + 1} из ${quiz.length}`;
+
+    const answersWrap = el("answers");
+    answersWrap.innerHTML = "";
+
+    item.opts.forEach((text, i) => {
+      const id = `opt_${state.idx}_${i}`;
+      const label = document.createElement("label");
+      label.className = "opt";
+      label.setAttribute("for", id);
+
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `q_${state.idx}`;
+      input.id = id;
+      input.value = i;
+      input.checked = (state.answers[state.idx] === i);
+      input.addEventListener("change", () => {
+        state.answers[state.idx] = i;
+        updateNavButtons();
+      });
+
+      const span = document.createElement("div");
+      span.textContent = text;
+
+      label.appendChild(input);
+      label.appendChild(span);
+      answersWrap.appendChild(label);
+    });
+
+    el("resetCount").textContent = String(state.resetCount);
+    updateNavButtons();
+  }
+
+  function updateNavButtons() {
+    el("prevBtn").disabled = (state.idx === 0);
+    const answered = state.answers[state.idx] !== null;
+    el("nextBtn").textContent = (state.idx === quiz.length - 1) ? "Завершить" : "Далее";
+    el("nextBtn").disabled = !answered;
+  }
+
+  function computeResult() {
+    let score = 0;
+    const wrong = [];
+    for (let i = 0; i < quiz.length; i++) {
+      if (state.answers[i] === quiz[i].a) score++;
+      else wrong.push(i + 1);
+    }
+    return { score, wrong, total: quiz.length, percent: Math.round(score / quiz.length * 100) };
+  }
+
+  async function sendResult(payload) {
+    if (!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_WEB_APP_URL_HERE")) {
+      el("sendStatus").textContent = "Не настроен WEB_APP_URL. Вставьте ссылку Web app из Google Apps Script в index.html.";
+      return;
+    }
+
+    try {
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (json && json.ok) {
+        el("sendStatus").innerHTML = "<span class='ok'>Результат отправлен в таблицу.</span>";
+      } else {
+        el("sendStatus").textContent = "Не удалось записать в таблицу. Проверьте доступ Web app (Anyone) и лист Results.";
+      }
+    } catch (e) {
+      el("sendStatus").textContent = "Ошибка отправки. Проверьте ссылку WEB_APP_URL и настройки деплоя Apps Script.";
+    }
+  }
+
+  function buildAnswerKeyHTML() {
+    const lines = quiz.map((item, i) => {
+      const correct = item.opts[item.a];
+      const yoursIdx = state.answers[i];
+      const yours = (yoursIdx === null ? "нет ответа" : item.opts[yoursIdx]);
+      const ok = (yoursIdx === item.a);
+      return `<div style="margin:10px 0;padding:10px;border:1px solid #223052;border-radius:10px;background:#0b1220">
+        <div class="mono" style="margin-bottom:6px">${item.q}</div>
+        <div>Ваш ответ: <b>${escapeHtml(yours)}</b> ${ok ? "<span class='ok'>(верно)</span>" : "<span style='color:#ff9a9a'>(ошибка)</span>"}</div>
+        <div>Правильный: <b>${escapeHtml(correct)}</b></div>
+      </div>`;
+    }).join("");
+    el("answerKey").innerHTML = lines;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replaceAll("&","&").replaceAll("<","<").replaceAll(">",">").replaceAll('"',""");
+  }
+
+  function startQuiz() {
+    const name = el("nameInput").value.trim();
+    if (!name) return;
+
+    state.name = name;
+    state.idx = 0;
+    state.answers = Array(quiz.length).fill(null);
+    state.started = true;
+
+    state.guardEnabled = true;
+    show("viewQuiz");
+    renderQuestion();
+  }
+
+  function resetDueToViolation() {
+    if (!state.guardEnabled || !state.started) return;
+    state.resetCount += 1;
+    state.started = false;
+    state.idx = 0;
+    state.answers = Array(quiz.length).fill(null);
+    el("resetCount").textContent = String(state.resetCount);
+    show("viewReset");
+  }
+
+  // Анти-подглядывание: сброс при уходе с вкладки/потере фокуса
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) resetDueToViolation();
+  });
+
+  window.addEventListener("blur", () => {
+    resetDueToViolation();
+  });
+
+  // UI events
+  el("startBtn").addEventListener("click", startQuiz);
+
+  el("prevBtn").addEventListener("click", () => {
+    if (state.idx > 0) state.idx--;
+    renderQuestion();
+  });
+
+  el("nextBtn").addEventListener("click", async () => {
+    if (state.answers[state.idx] === null) return;
+
+    if (state.idx < quiz.length - 1) {
+      state.idx++;
+      renderQuestion();
+      return;
+    }
+
+    // Finish
+    state.guardEnabled = false; // чтобы не сбросило на экране результата
+    const result = computeResult();
+
+    el("resName").textContent = state.name;
+    el("resScore").textContent = String(result.score);
+    el("resTotal").textContent = String(result.total);
+    el("resPercent").textContent = String(result.percent);
+    el("resResets").textContent = String(state.resetCount);
+
+    show("viewResult");
+    buildAnswerKeyHTML();
+
+    const payload = {
+      name: state.name,
+      score: result.score,
+      total: result.total,
+      wrongQuestions: result.wrong,
+      resetCount: state.resetCount,
+      userAgent: navigator.userAgent
+    };
+    await sendResult(payload);
+  });
+
+  el("restartBtn").addEventListener("click", () => {
+    show("viewStart");
+  });
+
+  el("againBtn").addEventListener("click", () => {
+    state.guardEnabled = false;
+    show("viewStart");
+  });
+
+</script>
+</body>
+</html>

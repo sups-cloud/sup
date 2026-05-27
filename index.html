@@ -231,8 +231,12 @@
   }
 
   function escapeHtml(s) {
-    return String(s).replaceAll("&","&").replaceAll("<","<").replaceAll(">",">").replaceAll('"',""");
-  }
+  return String(s)
+    .replaceAll("&", "&")
+    .replaceAll("<", "<")
+    .replaceAll(">", ">")
+    .replaceAll('"', """);
+}
 
   function startQuiz() {
     const name = el("nameInput").value.trim();

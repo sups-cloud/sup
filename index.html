@@ -230,12 +230,18 @@
     el("answerKey").innerHTML = lines;
   }
 
-  function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&")
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll('"', """);
+function escapeHtml(s) {
+  s = String(s);
+  var out = "";
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charCodeAt(i);
+    if (c === 38) out += "&";      // &
+    else if (c === 60) out += "<";  // <
+    else if (c === 62) out += ">";  // >
+    else if (c === 34) out += """; // "
+    else out += s[i];
+  }
+  return out;
 }
 
   function startQuiz() {

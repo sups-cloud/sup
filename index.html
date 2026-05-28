@@ -223,8 +223,8 @@
       const ok = (yoursIdx === item.a);
       return `<div style="margin:10px 0;padding:10px;border:1px solid #223052;border-radius:10px;background:#0b1220">
         <div class="mono" style="margin-bottom:6px">${item.q}</div>
-        <div>Ваш ответ: <b>${Html(yours)}</b> ${ok ? "<span class='ok'>(верно)</span>" : "<span style='color:#ff9a9a'>(ошибка)</span>"}</div>
-        <div>Правильный: <b>${Html(correct)}</b></div>
+<div>Ваш ответ: <b>${escapeHtml(yours)}</b> ${ok ? "<span class='ok'>(верно)</span>" : "<span style='color:#ff9a9a'>(ошибка)</span>"}</div>
+<div>Правильный: <b>${escapeHtml(correct)}</b></div>
       </div>`;
     }).join("");
     el("answerKey").innerHTML = lines;

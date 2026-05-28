@@ -238,7 +238,7 @@ function escapeHtml(s) {
     if (c === 38) out += "&";      // &
     else if (c === 60) out += "<";  // <
     else if (c === 62) out += ">";  // >
-    else if (c === 34) out += """; // "
+    else if (c === 34) out += """";
     else out += s[i];
   }
   return out;

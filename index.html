@@ -235,15 +235,14 @@ function escapeHtml(s) {
   var out = "";
   for (var i = 0; i < s.length; i++) {
     var c = s.charCodeAt(i);
-    if (c === 38) out += "&";      // &
-    else if (c === 60) out += "<";  // <
-    else if (c === 62) out += ">";  // >
-    else if (c === 34) out += """";
+    if (c === 38) out += "&";       // &
+    else if (c === 60) out += "<";   // <
+    else if (c === 62) out += ">";   // >
+    else if (c === 34) out += String.fromCharCode(34); // "
     else out += s[i];
   }
   return out;
 }
-
   function startQuiz() {
     const name = el("nameInput").value.trim();
     if (!name) return;
